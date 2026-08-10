@@ -34,9 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const counterViewsEl = document.getElementById('counter-views');
     const counterCalcsEl = document.getElementById('counter-calcs');
 
-    const UPSTASH_REST_URL = 'https://us1-clean-otter-39147.upstash.io';
-    const UPSTASH_TOKEN = 'AZbLACQgZWY4NzE3YTctM2ExMi00Y2UzLThjOGItYTVmYjNhM2E4MTMyYzNmOGE3NzEzNGE4NDc2MGE0ODc1MTY1NDExZWM0YTI=';
-
     // --- INITIALIZATION ---
     initCounters();
     initApp();
@@ -45,8 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (counterViewsEl) counterViewsEl.textContent = '...';
         if (counterCalcsEl) counterCalcsEl.textContent = '...';
 
-        // 1. Fetch & increment views globally on Upstash Cloud Database
-        execUpstashCommand('incr', 'evans_views_2026').then(viewsCount => {
+        // 1. Fetch & increment views globally across all computers
+        fetchGlobalCounter('views', 'up').then(viewsCount => {
             if (viewsCount !== null && counterViewsEl) {
                 counterViewsEl.textContent = viewsCount.toLocaleString();
             } else {
@@ -56,8 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. Fetch calculations count globally on Upstash Cloud Database
-        execUpstashCommand('get', 'evans_calcs_2026').then(calcsCount => {
+        // 2. Fetch calculations count globally
+        fetchGlobalCounter('calcs', 'get').then(calcsCount => {
             if (calcsCount !== null && counterCalcsEl) {
                 counterCalcsEl.textContent = calcsCount.toLocaleString();
             } else {
@@ -68,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function incrementCalcCounter() {
-        execUpstashCommand('incr', 'evans_calcs_2026').then(calcsCount => {
+        fetchGlobalCounter('calcs', 'up').then(calcsCount => {
             if (calcsCount !== null && counterCalcsEl) {
                 counterCalcsEl.textContent = calcsCount.toLocaleString();
             } else {
@@ -79,14 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function execUpstashCommand(command, key) {
+    async function fetchGlobalCounter(metricKey, action = 'up') {
+        const url = action === 'up'
+            ? `https://api.counterapi.dev/v2/test/test/up?_t=${Date.now()}`
+            : `https://api.counterapi.dev/v2/test/test?_t=${Date.now()}`;
+
         try {
-            const url = `${UPSTASH_REST_URL}/${command}/${key}?_token=${UPSTASH_TOKEN}&_t=${Date.now()}`;
-            const res = await fetch(url);
+            const res = await fetch(url, { cache: 'no-store' });
             if (res.ok) {
-                const data = await res.json();
-                const count = parseInt(data.result, 10);
-                if (!isNaN(count)) return count;
+                const json = await res.json();
+                if (json && json.data && typeof json.data.up_count === 'number') {
+                    return json.data.up_count;
+                }
             }
         } catch (e) {}
 
