@@ -39,55 +39,48 @@ document.addEventListener('DOMContentLoaded', () => {
     initApp();
 
     function initCounters() {
-        // 1. Initial display using local storage while network fetch executes
-        let localViews = 1;
-        let localCalcs = 0;
-        try {
-            localViews = parseInt(localStorage.getItem('evans_app_views') || '0', 10) + 1;
-            localStorage.setItem('evans_app_views', localViews.toString());
-            localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10);
-        } catch (e) {}
+        if (counterViewsEl) counterViewsEl.textContent = '...';
+        if (counterCalcsEl) counterCalcsEl.textContent = '...';
 
-        if (counterViewsEl) counterViewsEl.textContent = localViews.toLocaleString();
-        if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
-
-        // 2. Fetch Global Views (increments on view)
+        // 1. Fetch & increment Global Views
         fetchGlobalCount('views', 'up').then(count => {
             if (count !== null && counterViewsEl) {
                 counterViewsEl.textContent = count.toLocaleString();
+            } else {
+                let localViews = parseInt(localStorage.getItem('evans_app_views') || '0', 10) + 1;
+                localStorage.setItem('evans_app_views', localViews.toString());
+                if (counterViewsEl) counterViewsEl.textContent = localViews.toLocaleString();
             }
         });
 
-        // 3. Fetch Global Calculations (reads current total)
+        // 2. Fetch Global Calculations (reads current total)
         fetchGlobalCount('calcs', 'get').then(count => {
             if (count !== null && counterCalcsEl) {
                 counterCalcsEl.textContent = count.toLocaleString();
+            } else {
+                let localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10);
+                if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
             }
         });
     }
 
     function incrementCalcCounter() {
-        // 1. Local storage fallback increment
-        let localCalcs = 0;
-        try {
-            localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10) + 1;
-            localStorage.setItem('evans_app_calcs', localCalcs.toString());
-            if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
-        } catch (e) {}
-
-        // 2. Global counter API increment
         fetchGlobalCount('calcs', 'up').then(count => {
             if (count !== null && counterCalcsEl) {
                 counterCalcsEl.textContent = count.toLocaleString();
+            } else {
+                let localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10) + 1;
+                localStorage.setItem('evans_app_calcs', localCalcs.toString());
+                if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
             }
         });
     }
 
     async function fetchGlobalCount(metricKey, action = 'up') {
         const cacheBuster = Date.now();
-        // Primary API: CodeTabs Counter (Auto-creates keys, CORS-enabled for GitHub Pages)
+        // 1. CodeTabs Counter API (Auto-creates keys, CORS-enabled for GitHub Pages)
         try {
-            const codetabsUrl = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_plus_${metricKey}_v2&_t=${cacheBuster}`;
+            const codetabsUrl = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_plus_${metricKey}_v3&_t=${cacheBuster}`;
             const res = await fetch(codetabsUrl, { cache: 'no-store' });
             if (res.ok) {
                 const text = await res.text();
@@ -102,10 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {}
 
-        // Secondary API: CounterAPI.dev
+        // 2. CounterAPI.dev
         const primaryUrl = action === 'up' 
-            ? `https://api.counterapi.dev/v1/evans_narenthiran_v2/${metricKey}/up?_t=${cacheBuster}`
-            : `https://api.counterapi.dev/v1/evans_narenthiran_v2/${metricKey}?_t=${cacheBuster}`;
+            ? `https://api.counterapi.dev/v1/evans_narenthiran_v3/${metricKey}/up?_t=${cacheBuster}`
+            : `https://api.counterapi.dev/v1/evans_narenthiran_v3/${metricKey}?_t=${cacheBuster}`;
 
         try {
             const res = await fetch(primaryUrl, { cache: 'no-store' });
