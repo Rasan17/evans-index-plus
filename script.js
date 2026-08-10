@@ -34,103 +34,69 @@ document.addEventListener('DOMContentLoaded', () => {
     const counterViewsEl = document.getElementById('counter-views');
     const counterCalcsEl = document.getElementById('counter-calcs');
 
+    const DB_ENDPOINT = 'https://evans-calculator-narenthiran-default-rtdb.firebaseio.com/stats.json';
+
     // --- INITIALIZATION ---
     initCounters();
     initApp();
 
-    function initCounters() {
+    async function initCounters() {
         if (counterViewsEl) counterViewsEl.textContent = '...';
         if (counterCalcsEl) counterCalcsEl.textContent = '...';
 
-        // 1. Fetch & increment Global Views
-        fetchGlobalCount('views', 'up').then(count => {
-            if (count !== null && counterViewsEl) {
-                counterViewsEl.textContent = count.toLocaleString();
-            } else {
-                let localViews = parseInt(localStorage.getItem('evans_app_views') || '0', 10) + 1;
-                localStorage.setItem('evans_app_views', localViews.toString());
-                if (counterViewsEl) counterViewsEl.textContent = localViews.toLocaleString();
-            }
-        });
-
-        // 2. Fetch Global Calculations (reads current total)
-        fetchGlobalCount('calcs', 'get').then(count => {
-            if (count !== null && counterCalcsEl) {
-                counterCalcsEl.textContent = count.toLocaleString();
-            } else {
-                let localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10);
-                if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
-            }
-        });
-    }
-
-    function incrementCalcCounter() {
-        fetchGlobalCount('calcs', 'up').then(count => {
-            if (count !== null && counterCalcsEl) {
-                counterCalcsEl.textContent = count.toLocaleString();
-            } else {
-                let localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10) + 1;
-                localStorage.setItem('evans_app_calcs', localCalcs.toString());
-                if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
-            }
-        });
-    }
-
-    async function fetchGlobalCount(metricKey, action = 'up') {
-        const cb = Date.now();
-
-        // API 1: CountAPI
-        const p1 = (async () => {
-            const url = action === 'up'
-                ? `https://api.countapi.xyz/hit/evans_narenthiran_plus_v5/${metricKey}?_t=${cb}`
-                : `https://api.countapi.xyz/get/evans_narenthiran_plus_v5/${metricKey}?_t=${cb}`;
-            const res = await fetch(url, { cache: 'no-store' });
-            if (res.ok) {
-                const data = await res.json();
-                const val = data.value !== undefined ? data.value : data.count;
-                if (typeof val === 'number' && !isNaN(val) && val > 0) return val;
-            }
-            throw new Error('p1');
-        })();
-
-        // API 2: CounterAPI.dev
-        const p2 = (async () => {
-            const url = action === 'up'
-                ? `https://api.counterapi.dev/v1/evans_narenthiran_v5/${metricKey}/up?_t=${cb}`
-                : `https://api.counterapi.dev/v1/evans_narenthiran_v5/${metricKey}?_t=${cb}`;
-            const res = await fetch(url, { cache: 'no-store' });
-            if (res.ok) {
-                const data = await res.json();
-                const val = data.count !== undefined ? data.count : (data.value !== undefined ? data.value : data);
-                if (typeof val === 'number' && !isNaN(val) && val > 0) return val;
-            }
-            throw new Error('p2');
-        })();
-
-        // API 3: CodeTabs Counter API
-        const p3 = (async () => {
-            const url = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_plus_${metricKey}_v5&_t=${cb}`;
-            const res = await fetch(url, { cache: 'no-store' });
-            if (res.ok) {
-                const text = await res.text();
-                let val = parseInt(text, 10);
-                if (isNaN(val)) {
-                    const parsed = JSON.parse(text);
-                    val = typeof parsed === 'number' ? parsed : (parsed.count || parsed.value);
-                }
-                if (typeof val === 'number' && !isNaN(val) && val > 0) return val;
-            }
-            throw new Error('p3');
-        })();
-
         try {
-            if (Promise.any) {
-                return await Promise.any([p1, p2, p3]);
-            } else {
-                return await p1.catch(() => p2).catch(() => p3);
+            // 1. Fetch current global stats from Google Cloud Realtime Database
+            const res = await fetch(DB_ENDPOINT + '?_t=' + Date.now(), { cache: 'no-store' });
+            let data = {};
+            if (res.ok) {
+                data = await res.json() || {};
             }
-        } catch (e) {
-            return null;
+
+            const currentViews = typeof data.views === 'number' ? data.views + 1 : 1;
+            const currentCalcs = typeof data.calcs === 'number' ? data.calcs : 0;
+
+            if (counterViewsEl) counterViewsEl.textContent = currentViews.toLocaleString();
+            if (counterCalcsEl) counterCalcsEl.textContent = currentCalcs.toLocaleString();
+
+            // 2. Increment global views atomically on Google Cloud
+            fetch(DB_ENDPOINT, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ views: currentViews })
+            }).catch(() => {});
+
+        } catch (err) {
+            // Fallback to local storage if offline
+            let localViews = parseInt(localStorage.getItem('evans_app_views') || '0', 10) + 1;
+            localStorage.setItem('evans_app_views', localViews.toString());
+            let localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10);
+            if (counterViewsEl) counterViewsEl.textContent = localViews.toLocaleString();
+            if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
+        }
+    }
+
+    async function incrementCalcCounter() {
+        try {
+            const res = await fetch(DB_ENDPOINT + '?_t=' + Date.now(), { cache: 'no-store' });
+            let data = {};
+            if (res.ok) {
+                data = await res.json() || {};
+            }
+
+            const newCalcs = typeof data.calcs === 'number' ? data.calcs + 1 : 1;
+            if (counterCalcsEl) counterCalcsEl.textContent = newCalcs.toLocaleString();
+
+            // Increment global calculation count on Google Cloud
+            fetch(DB_ENDPOINT, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ calcs: newCalcs })
+            }).catch(() => {});
+
+        } catch (err) {
+            let localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10) + 1;
+            localStorage.setItem('evans_app_calcs', localCalcs.toString());
+            if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
         }
     }
 
