@@ -288,11 +288,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SORTING & ANALYTICS ---
     function getSortedValidTimePoints() {
-        // Filter rows that have both a valid date and calculated index
-        const valid = timePoints.filter(tp => tp.date && tp.index !== null && !isNaN(tp.index));
+        // Filter rows that have a calculated index (whether date is filled or not!)
+        const valid = timePoints.filter(tp => tp.index !== null && !isNaN(tp.index));
 
-        // Sort strictly in ASCENDING CHRONOLOGICAL ORDER of dates
-        valid.sort((a, b) => new Date(a.date) - new Date(b.date));
+        // Sort in ASCENDING CHRONOLOGICAL ORDER of dates if dates exist, maintaining table order for undated rows
+        valid.sort((a, b) => {
+            if (a.date && b.date) return new Date(a.date) - new Date(b.date);
+            if (a.date) return -1;
+            if (b.date) return 1;
+            return a.number - b.number;
+        });
         return valid;
     }
 
@@ -325,8 +330,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Render or Update Bar Chart
-        if (sortedValid.length >= 2) {
+        // Render or Update Bar Chart (renders whenever 1 or more valid measurements exist!)
+        if (sortedValid.length >= 1) {
             chartPlaceholder.classList.add('hidden');
             chartContainer.classList.remove('hidden');
             renderBarChart(sortedValid);
@@ -338,8 +343,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CHART.JS BAR GRAPH RENDERER ---
     function renderBarChart(sortedData) {
-        // Labels: Ascending Chronological Dates
-        const labels = sortedData.map(item => formatDateLabel(item.date));
+        // Labels: Context, Date, or Scan #
+        const labels = sortedData.map((item, idx) => {
+            const formattedDate = formatDateLabel(item.date);
+            if (item.context && formattedDate) {
+                return `${item.context} (${formattedDate})`;
+            } else if (item.context) {
+                return item.context;
+            } else if (formattedDate) {
+                return formattedDate;
+            }
+            return `Scan #${item.number}`;
+        });
         const dataValues = sortedData.map(item => item.index);
 
         // Dynamic background colors per bar: Normal (<0.30) vs Elevated (>=0.30)
@@ -392,21 +407,25 @@ document.addEventListener('DOMContentLoaded', () => {
                             callbacks: {
                                 title: function(context) {
                                     const index = context[0].dataIndex;
-                                    return `Scan Date: ${sortedData[index].date}`;
+                                    const item = sortedData[index];
+                                    const formattedDate = formatDateLabel(item.date);
+                                    if (item.context && formattedDate) return `${item.context} (${formattedDate})`;
+                                    if (item.context) return item.context;
+                                    if (formattedDate) return `Scan Date: ${formattedDate}`;
+                                    return `Scan #${item.number}`;
                                 },
                                 label: function(context) {
                                     const index = context.dataIndex;
                                     const item = sortedData[index];
                                     const unitStr = unitSelect.value;
-                                    const ctxStr = item.context ? `Context: ${item.context}` : null;
-                                    const lines = [
-                                        `Evans' Index: ${item.index.toFixed(3)}`
+                                    const baseline = sortedData[0].index;
+                                    const deltaVal = item.index - baseline;
+                                    const deltaText = index === 0 ? '(Baseline)' : `(Δ ${deltaVal >= 0 ? '+' : ''}${deltaVal.toFixed(3)})`;
+                                    return [
+                                        `Evans' Index: ${item.index.toFixed(3)} ${deltaText}`,
+                                        `Status: ${item.index >= 0.30 ? 'Ventriculomegaly (>=0.30)' : 'Normal Range (<0.30)'}`,
+                                        `Bifrontal: ${item.bifrontal} ${unitStr} | Inner Skull: ${item.internal} ${unitStr}`
                                     ];
-                                    if (ctxStr) lines.push(ctxStr);
-                                    lines.push(`Bifrontal Horn Width: ${item.bifrontal} ${unitStr}`);
-                                    lines.push(`Max Internal Skull Width: ${item.internal} ${unitStr}`);
-                                    lines.push(`Status: ${item.index >= 0.30 ? 'Elevated (Ventriculomegaly)' : 'Normal Ventricles'}`);
-                                    return lines;
                                 }
                             }
                         },
