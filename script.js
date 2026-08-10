@@ -77,39 +77,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchGlobalCount(metricKey, action = 'up') {
-        const cacheBuster = Date.now();
-        // 1. CodeTabs Counter API (Auto-creates keys, CORS-enabled for GitHub Pages)
-        try {
-            const codetabsUrl = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_plus_${metricKey}_v3&_t=${cacheBuster}`;
-            const res = await fetch(codetabsUrl, { cache: 'no-store' });
+        const cb = Date.now();
+
+        // API 1: CountAPI
+        const p1 = (async () => {
+            const url = action === 'up'
+                ? `https://api.countapi.xyz/hit/evans_narenthiran_plus_v5/${metricKey}?_t=${cb}`
+                : `https://api.countapi.xyz/get/evans_narenthiran_plus_v5/${metricKey}?_t=${cb}`;
+            const res = await fetch(url, { cache: 'no-store' });
             if (res.ok) {
-                const text = await res.text();
-                let val = NaN;
-                try {
-                    const parsed = JSON.parse(text);
-                    val = typeof parsed === 'number' ? parsed : (parsed.count || parsed.value || parsed.up);
-                } catch (e) {
-                    val = parseInt(text, 10);
-                }
+                const data = await res.json();
+                const val = data.value !== undefined ? data.value : data.count;
                 if (typeof val === 'number' && !isNaN(val) && val > 0) return val;
             }
-        } catch (e) {}
+            throw new Error('p1');
+        })();
 
-        // 2. CounterAPI.dev
-        const primaryUrl = action === 'up' 
-            ? `https://api.counterapi.dev/v1/evans_narenthiran_v3/${metricKey}/up?_t=${cacheBuster}`
-            : `https://api.counterapi.dev/v1/evans_narenthiran_v3/${metricKey}?_t=${cacheBuster}`;
-
-        try {
-            const res = await fetch(primaryUrl, { cache: 'no-store' });
+        // API 2: CounterAPI.dev
+        const p2 = (async () => {
+            const url = action === 'up'
+                ? `https://api.counterapi.dev/v1/evans_narenthiran_v5/${metricKey}/up?_t=${cb}`
+                : `https://api.counterapi.dev/v1/evans_narenthiran_v5/${metricKey}?_t=${cb}`;
+            const res = await fetch(url, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 const val = data.count !== undefined ? data.count : (data.value !== undefined ? data.value : data);
                 if (typeof val === 'number' && !isNaN(val) && val > 0) return val;
             }
-        } catch (e) {}
+            throw new Error('p2');
+        })();
 
-        return null;
+        // API 3: CodeTabs Counter API
+        const p3 = (async () => {
+            const url = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_plus_${metricKey}_v5&_t=${cb}`;
+            const res = await fetch(url, { cache: 'no-store' });
+            if (res.ok) {
+                const text = await res.text();
+                let val = parseInt(text, 10);
+                if (isNaN(val)) {
+                    const parsed = JSON.parse(text);
+                    val = typeof parsed === 'number' ? parsed : (parsed.count || parsed.value);
+                }
+                if (typeof val === 'number' && !isNaN(val) && val > 0) return val;
+            }
+            throw new Error('p3');
+        })();
+
+        try {
+            if (Promise.any) {
+                return await Promise.any([p1, p2, p3]);
+            } else {
+                return await p1.catch(() => p2).catch(() => p3);
+            }
+        } catch (e) {
+            return null;
+        }
     }
 
     function initApp() {
