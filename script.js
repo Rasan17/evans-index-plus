@@ -34,10 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const counterViewsEl = document.getElementById('counter-views');
     const counterCalcsEl = document.getElementById('counter-calcs');
 
-    const API_VIEWS_URL = 'https://api.counterapi.dev/v1/evans_plus_narenthiran/views/up';
-    const API_CALCS_URL = 'https://api.counterapi.dev/v1/evans_plus_narenthiran/calcs/up';
-    const API_CALCS_GET_URL = 'https://api.counterapi.dev/v1/evans_plus_narenthiran/calcs';
-
     // --- INITIALIZATION ---
     initCounters();
     initApp();
@@ -55,32 +51,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (counterViewsEl) counterViewsEl.textContent = localViews.toLocaleString();
         if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
 
-        // 2. Fetch global view count across all computers worldwide
-        fetch(API_VIEWS_URL, { mode: 'cors' })
-            .then(res => res.json())
-            .then(data => {
-                const count = data.count || data.value || data.up;
-                if (typeof count === 'number') {
-                    if (counterViewsEl) counterViewsEl.textContent = count.toLocaleString();
-                }
-            })
-            .catch(err => {
-                console.log('Using local views fallback due to network/CORS boundary.');
-            });
+        // 2. Fetch Global Views (increments on view)
+        fetchGlobalCount('views', 'up').then(count => {
+            if (count !== null && counterViewsEl) {
+                counterViewsEl.textContent = count.toLocaleString();
+            }
+        });
 
-        // 3. Fetch global calculation count
-        fetch(API_CALCS_GET_URL, { mode: 'cors' })
-            .then(res => res.json())
-            .then(data => {
-                const count = data.count || data.value;
-                if (typeof count === 'number') {
-                    if (counterCalcsEl) counterCalcsEl.textContent = count.toLocaleString();
-                }
-            })
-            .catch(() => {});
+        // 3. Fetch Global Calculations (reads current total)
+        fetchGlobalCount('calcs', 'get').then(count => {
+            if (count !== null && counterCalcsEl) {
+                counterCalcsEl.textContent = count.toLocaleString();
+            }
+        });
     }
 
     function incrementCalcCounter() {
+        // 1. Local storage fallback increment
         let localCalcs = 0;
         try {
             localCalcs = parseInt(localStorage.getItem('evans_app_calcs') || '0', 10) + 1;
@@ -88,15 +75,41 @@ document.addEventListener('DOMContentLoaded', () => {
             if (counterCalcsEl) counterCalcsEl.textContent = localCalcs.toLocaleString();
         } catch (e) {}
 
-        fetch(API_CALCS_URL, { mode: 'cors' })
-            .then(res => res.json())
-            .then(data => {
-                const count = data.count || data.value || data.up;
-                if (typeof count === 'number') {
-                    if (counterCalcsEl) counterCalcsEl.textContent = count.toLocaleString();
-                }
-            })
-            .catch(() => {});
+        // 2. Global counter API increment
+        fetchGlobalCount('calcs', 'up').then(count => {
+            if (count !== null && counterCalcsEl) {
+                counterCalcsEl.textContent = count.toLocaleString();
+            }
+        });
+    }
+
+    async function fetchGlobalCount(metricKey, action = 'up') {
+        // Primary API: CounterAPI.dev
+        const primaryUrl = action === 'up' 
+            ? `https://api.counterapi.dev/v1/evans_narenthiran_${metricKey}/count/up`
+            : `https://api.counterapi.dev/v1/evans_narenthiran_${metricKey}/count`;
+
+        try {
+            const res = await fetch(primaryUrl);
+            if (res.ok) {
+                const data = await res.json();
+                const val = data.count !== undefined ? data.count : (data.value !== undefined ? data.value : data);
+                if (typeof val === 'number' && !isNaN(val)) return val;
+            }
+        } catch (e) {}
+
+        // Secondary API: CodeTabs Counter
+        try {
+            const fallbackUrl = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_${metricKey}`;
+            const res = await fetch(fallbackUrl);
+            if (res.ok) {
+                const text = await res.text();
+                const val = parseInt(text, 10);
+                if (!isNaN(val)) return val;
+            }
+        } catch (e) {}
+
+        return null;
     }
 
     function initApp() {
