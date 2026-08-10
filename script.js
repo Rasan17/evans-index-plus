@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (a.date && b.date) return new Date(a.date) - new Date(b.date);
             if (a.date) return -1;
             if (b.date) return 1;
-            return a.number - b.number;
+            return 0;
         });
         return valid;
     }
@@ -353,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (formattedDate) {
                 return formattedDate;
             }
-            return `Scan #${item.number}`;
+            return `Scan #${idx + 1}`;
         });
         const dataValues = sortedData.map(item => item.index);
 
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     if (item.context && formattedDate) return `${item.context} (${formattedDate})`;
                                     if (item.context) return item.context;
                                     if (formattedDate) return `Scan Date: ${formattedDate}`;
-                                    return `Scan #${item.number}`;
+                                    return `Scan #${index + 1}`;
                                 },
                                 label: function(context) {
                                     const index = context.dataIndex;
