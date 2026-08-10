@@ -84,7 +84,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchGlobalCount(metricKey, action = 'up') {
-        // Primary API: CounterAPI.dev
+        // Primary API: CodeTabs Counter (Auto-creates keys, CORS-enabled for GitHub Pages)
+        try {
+            const codetabsUrl = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_plus_${metricKey}_v1`;
+            const res = await fetch(codetabsUrl);
+            if (res.ok) {
+                const text = await res.text();
+                let val = NaN;
+                try {
+                    const parsed = JSON.parse(text);
+                    val = typeof parsed === 'number' ? parsed : (parsed.count || parsed.value || parsed.up);
+                } catch (e) {
+                    val = parseInt(text, 10);
+                }
+                if (typeof val === 'number' && !isNaN(val) && val > 0) return val;
+            }
+        } catch (e) {}
+
+        // Secondary API: CounterAPI.dev
         const primaryUrl = action === 'up' 
             ? `https://api.counterapi.dev/v1/evans_narenthiran_${metricKey}/count/up`
             : `https://api.counterapi.dev/v1/evans_narenthiran_${metricKey}/count`;
@@ -94,18 +111,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 const data = await res.json();
                 const val = data.count !== undefined ? data.count : (data.value !== undefined ? data.value : data);
-                if (typeof val === 'number' && !isNaN(val)) return val;
-            }
-        } catch (e) {}
-
-        // Secondary API: CodeTabs Counter
-        try {
-            const fallbackUrl = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_${metricKey}`;
-            const res = await fetch(fallbackUrl);
-            if (res.ok) {
-                const text = await res.text();
-                const val = parseInt(text, 10);
-                if (!isNaN(val)) return val;
+                if (typeof val === 'number' && !isNaN(val) && val > 0) return val;
             }
         } catch (e) {}
 
