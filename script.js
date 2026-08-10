@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const counterViewsEl = document.getElementById('counter-views');
     const counterCalcsEl = document.getElementById('counter-calcs');
 
+    const UPSTASH_REST_URL = 'https://us1-clean-otter-39147.upstash.io';
+    const UPSTASH_TOKEN = 'AZbLACQgZWY4NzE3YTctM2ExMi00Y2UzLThjOGItYTVmYjNhM2E4MTMyYzNmOGE3NzEzNGE4NDc2MGE0ODc1MTY1NDExZWM0YTI=';
+
     // --- INITIALIZATION ---
     initCounters();
     initApp();
@@ -42,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (counterViewsEl) counterViewsEl.textContent = '...';
         if (counterCalcsEl) counterCalcsEl.textContent = '...';
 
-        // 1. Fetch & increment views globally across all computers
-        fetchAndIncrementMetric('views').then(viewsCount => {
+        // 1. Fetch & increment views globally on Upstash Cloud Database
+        execUpstashCommand('incr', 'evans_views_2026').then(viewsCount => {
             if (viewsCount !== null && counterViewsEl) {
                 counterViewsEl.textContent = viewsCount.toLocaleString();
             } else {
@@ -53,8 +56,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. Fetch calculations count globally
-        fetchMetricCount('calcs').then(calcsCount => {
+        // 2. Fetch calculations count globally on Upstash Cloud Database
+        execUpstashCommand('get', 'evans_calcs_2026').then(calcsCount => {
             if (calcsCount !== null && counterCalcsEl) {
                 counterCalcsEl.textContent = calcsCount.toLocaleString();
             } else {
@@ -65,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function incrementCalcCounter() {
-        fetchAndIncrementMetric('calcs').then(calcsCount => {
+        execUpstashCommand('incr', 'evans_calcs_2026').then(calcsCount => {
             if (calcsCount !== null && counterCalcsEl) {
                 counterCalcsEl.textContent = calcsCount.toLocaleString();
             } else {
@@ -76,66 +79,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    async function fetchAndIncrementMetric(metricName) {
-        const keyName = `evans_plus_${metricName}_2026`;
-        const cb = Date.now();
-
-        // Tier 1: CountAPI REST (Auto-provisions, CORS open)
+    async function execUpstashCommand(command, key) {
         try {
-            const res = await fetch(`https://api.countapi.ir/v1/${keyName}/up?_t=${cb}`, { cache: 'no-store' });
+            const url = `${UPSTASH_REST_URL}/${command}/${key}?_t=${Date.now()}`;
+            const res = await fetch(url, {
+                headers: {
+                    Authorization: `Bearer ${UPSTASH_TOKEN}`
+                },
+                cache: 'no-store'
+            });
+
             if (res.ok) {
                 const data = await res.json();
-                const count = data.value !== undefined ? data.value : data.count;
-                if (typeof count === 'number' && !isNaN(count) && count > 0) return count;
-            }
-        } catch (e) {}
-
-        // Tier 2: CounterAPI REST
-        try {
-            const res = await fetch(`https://api.counterapi.dev/v1/${keyName}/count/up?_t=${cb}`, { cache: 'no-store' });
-            if (res.ok) {
-                const data = await res.json();
-                const count = data.count !== undefined ? data.count : data.value;
-                if (typeof count === 'number' && !isNaN(count) && count > 0) return count;
-            }
-        } catch (e) {}
-
-        // Tier 3: CodeTabs Counter API
-        try {
-            const res = await fetch(`https://api.codetabs.com/v1/counter?key=${keyName}&_t=${cb}`, { cache: 'no-store' });
-            if (res.ok) {
-                const text = await res.text();
-                let count = parseInt(text, 10);
-                if (isNaN(count)) {
-                    const parsed = JSON.parse(text);
-                    count = typeof parsed === 'number' ? parsed : (parsed.count || parsed.value);
-                }
-                if (typeof count === 'number' && !isNaN(count) && count > 0) return count;
-            }
-        } catch (e) {}
-
-        return null;
-    }
-
-    async function fetchMetricCount(metricName) {
-        const keyName = `evans_plus_${metricName}_2026`;
-        const cb = Date.now();
-
-        try {
-            const res = await fetch(`https://api.countapi.ir/v1/${keyName}?_t=${cb}`, { cache: 'no-store' });
-            if (res.ok) {
-                const data = await res.json();
-                const count = data.value !== undefined ? data.value : data.count;
-                if (typeof count === 'number' && !isNaN(count) && count > 0) return count;
-            }
-        } catch (e) {}
-
-        try {
-            const res = await fetch(`https://api.counterapi.dev/v1/${keyName}/count?_t=${cb}`, { cache: 'no-store' });
-            if (res.ok) {
-                const data = await res.json();
-                const count = data.count !== undefined ? data.count : data.value;
-                if (typeof count === 'number' && !isNaN(count) && count > 0) return count;
+                const count = parseInt(data.result, 10);
+                if (!isNaN(count)) return count;
             }
         } catch (e) {}
 
