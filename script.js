@@ -84,10 +84,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchGlobalCount(metricKey, action = 'up') {
+        const cacheBuster = Date.now();
         // Primary API: CodeTabs Counter (Auto-creates keys, CORS-enabled for GitHub Pages)
         try {
-            const codetabsUrl = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_plus_${metricKey}_v1`;
-            const res = await fetch(codetabsUrl);
+            const codetabsUrl = `https://api.codetabs.com/v1/counter?key=evans_narenthiran_plus_${metricKey}_v2&_t=${cacheBuster}`;
+            const res = await fetch(codetabsUrl, { cache: 'no-store' });
             if (res.ok) {
                 const text = await res.text();
                 let val = NaN;
@@ -103,11 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Secondary API: CounterAPI.dev
         const primaryUrl = action === 'up' 
-            ? `https://api.counterapi.dev/v1/evans_narenthiran_${metricKey}/count/up`
-            : `https://api.counterapi.dev/v1/evans_narenthiran_${metricKey}/count`;
+            ? `https://api.counterapi.dev/v1/evans_narenthiran_v2/${metricKey}/up?_t=${cacheBuster}`
+            : `https://api.counterapi.dev/v1/evans_narenthiran_v2/${metricKey}?_t=${cacheBuster}`;
 
         try {
-            const res = await fetch(primaryUrl);
+            const res = await fetch(primaryUrl, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 const val = data.count !== undefined ? data.count : (data.value !== undefined ? data.value : data);
