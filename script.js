@@ -81,14 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function execUpstashCommand(command, key) {
         try {
-            const url = `${UPSTASH_REST_URL}/${command}/${key}?_t=${Date.now()}`;
-            const res = await fetch(url, {
-                headers: {
-                    Authorization: `Bearer ${UPSTASH_TOKEN}`
-                },
-                cache: 'no-store'
-            });
-
+            const url = `${UPSTASH_REST_URL}/${command}/${key}?_token=${UPSTASH_TOKEN}&_t=${Date.now()}`;
+            const res = await fetch(url);
             if (res.ok) {
                 const data = await res.json();
                 const count = parseInt(data.result, 10);
