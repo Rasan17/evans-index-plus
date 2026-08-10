@@ -77,16 +77,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function fetchGlobalCounter(metricKey, action = 'up') {
-        const url = action === 'up'
-            ? `https://api.counterapi.dev/v2/test/test/up?_t=${Date.now()}`
-            : `https://api.counterapi.dev/v2/test/test?_t=${Date.now()}`;
+        let endpoint = 'https://api.counterapi.dev/v2/test/test';
+        if (metricKey === 'views' && action === 'up') {
+            endpoint += '/up';
+        } else if (metricKey === 'calcs' && action === 'up') {
+            endpoint += '/down';
+        }
 
         try {
+            const url = `${endpoint}?_t=${Date.now()}`;
             const res = await fetch(url, { cache: 'no-store' });
             if (res.ok) {
                 const json = await res.json();
-                if (json && json.data && typeof json.data.up_count === 'number') {
-                    return json.data.up_count;
+                if (json && json.data) {
+                    const count = metricKey === 'views' ? json.data.up_count : json.data.down_count;
+                    if (typeof count === 'number') return count;
                 }
             }
         } catch (e) {}
