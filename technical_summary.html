@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Technical Summary - Evans' Index Plus Calculator</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            line-height: 1.6;
+            margin: 0;
+            padding: 24px;
+            background-color: #ffffff;
+        }
+        .header {
+            border-bottom: 3px solid #0284c7;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+        }
+        h1 {
+            color: #0f172a;
+            font-size: 24pt;
+            margin: 0 0 8px 0;
+            font-weight: 700;
+        }
+        .meta {
+            font-size: 11pt;
+            color: #475569;
+        }
+        .meta strong {
+            color: #0f172a;
+        }
+        .url-badge {
+            display: inline-block;
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 10pt;
+            margin-top: 6px;
+        }
+        h2 {
+            color: #0369a1;
+            font-size: 15pt;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 6px;
+            margin-top: 28px;
+            margin-bottom: 14px;
+        }
+        h3 {
+            color: #1e293b;
+            font-size: 12pt;
+            margin-top: 18px;
+            margin-bottom: 8px;
+        }
+        p {
+            font-size: 10.5pt;
+            margin-bottom: 12px;
+        }
+        ul, ol {
+            font-size: 10.5pt;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 10pt;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            background-color: #f1f5f9;
+            color: #0284c7;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 9.5pt;
+        }
+        .code-block {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 9pt;
+            white-space: pre-wrap;
+            margin: 12px 0;
+        }
+        .footer {
+            margin-top: 40px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 12px;
+            font-size: 9pt;
+            color: #64748b;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Technical Summary: Evans' Index Plus Calculator</h1>
+        <div class="meta">
+            <strong>Author & Lead Developer:</strong> Dr G Narenthiran FEBNS, FRCS(SN) (<a href="mailto:g_narenthiran@hotmail.com">g_narenthiran@hotmail.com</a>)<br>
+            <strong>Live Application URL:</strong> <span class="url-badge">https://rasan17.github.io/evans-index-plus/</span>
+        </div>
+    </div>
+
+    <h2>🌐 Part 1: How the Global Counter Engine & Separate Metrics Were Solved</h2>
+
+    <h3>1. The Challenge with Local vs. Global Counting</h3>
+    <p>In initial versions, browsers were displaying separate counts per computer because:</p>
+    <ul>
+        <li>Free public counter endpoints returned <code>HTTP 410</code> (deprecated API versions) or failed CORS preflight checks (<code>OPTIONS</code> HTTP headers).</li>
+        <li>Whenever a network call failed, the browser silently fell back to <code>localStorage</code> (which only stores data locally on that specific computer/browser).</li>
+    </ul>
+
+    <h3>2. The Solution: CounterAPI v2 Engine & Cache-Busting</h3>
+    <ul>
+        <li><strong>Direct REST Querying:</strong> Switched to <strong>CounterAPI v2</strong> using direct URL queries without custom preflight headers.</li>
+        <li><strong>Cache-Busting (<code>?_t=TIMESTAMP</code>):</strong> Appended live Unix timestamps (<code>Date.now()</code>) and <code>{ cache: 'no-store' }</code> to every HTTP request. This prevents Chrome, Safari, and mobile browsers from serving stale cached numbers and forces them to fetch the live database total every time.</li>
+    </ul>
+
+    <h3>3. Separating "App Views" vs. "Calculations Done"</h3>
+    <p>To ensure <strong>App Views</strong> and <strong>Calculations Done</strong> operate as two completely independent global counters:</p>
+    <ul>
+        <li><strong>App Views ➔ Channel 1 (<code>up_count</code>):</strong> Increments globally whenever any visitor worldwide opens or refreshes the web application. Endpoint: <code>https://api.counterapi.dev/v2/test/test/up</code></li>
+        <li><strong>Calculations Done ➔ Channel 2 (<code>down_count</code>):</strong> Reads existing totals on page load <em>without incrementing</em>, and increments globally <strong>ONLY</strong> when a user enters valid cranial measurements and completes an Evans' Index calculation. Endpoint: <code>https://api.counterapi.dev/v2/test/test/down</code></li>
+    </ul>
+
+    <h2>📊 Part 2: How the Longitudinal Bar Graph Was Engineered to Work Without Dates</h2>
+
+    <h3>1. The Problem: The <code>NaN</code> Sorting Bug</h3>
+    <p>Originally, the application:</p>
+    <ol>
+        <li>Filtered time points using <code>tp.date && tp.index !== null</code>. If a user entered measurements without selecting a calendar date, the row was completely ignored.</li>
+        <li>Attempted to sort undated rows using <code>a.number - b.number</code>. Because <code>number</code> was an undefined property on row data objects, <code>undefined - undefined</code> evaluated to <strong><code>NaN</code></strong> (Not-a-Number) in JavaScript, causing <code>Array.prototype.sort()</code> to fail silently and suppress the Chart.js rendering pipeline.</li>
+    </ol>
+
+    <h3>2. The Solution: Date-Independent Filtering & Fallback Sorting</h3>
+    <ul>
+        <li><strong>Date-Independent Qualification:</strong> Updated the filtering logic to qualify any row with valid numerical measurements, regardless of whether a date is provided:
+            <div class="code-block">const valid = timePoints.filter(tp => tp.index !== null && !isNaN(tp.index));</div>
+        </li>
+        <li><strong>Fail-Safe Chronological Sorting:</strong> Updated the sorting algorithm to order chronologically when dates are present, while safely preserving insertion order (<code>return 0</code>) when dates are omitted—eliminating <code>NaN</code> sorting errors completely:
+            <div class="code-block">valid.sort((a, b) => {
+    if (a.date && b.date) return new Date(a.date) - new Date(b.date);
+    if (a.date) return -1;
+    if (b.date) return 1;
+    return 0;
+});</div>
+        </li>
+    </ul>
+
+    <h3>3. Dynamic Smart Bar & Tooltip Labeling</h3>
+    <p>To ensure the graph displays informative X-axis labels under all user input scenarios, the renderer evaluates a 4-tier fallback hierarchy:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Input Provided</th>
+                <th>X-Axis Bar Label Example</th>
+                <th>Tooltip Title Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Context + Date</strong></td>
+                <td><code>Pre-Op (Jan 15, 2026)</code></td>
+                <td><code>Pre-Op (Jan 15, 2026)</code></td>
+            </tr>
+            <tr>
+                <td><strong>Context Only</strong></td>
+                <td><code>Pre-Op</code></td>
+                <td><code>Pre-Op</code></td>
+            </tr>
+            <tr>
+                <td><strong>Date Only</strong></td>
+                <td><code>Jan 15, 2026</code></td>
+                <td><code>Scan Date: Jan 15, 2026</code></td>
+            </tr>
+            <tr>
+                <td><strong>Neither (Undated)</strong></td>
+                <td><code>Scan #1</code>, <code>Scan #2</code></td>
+                <td><code>Scan #1</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>📁 Repository Files Summary</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Purpose</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>index.html</code></td>
+                <td>Structural HTML5 markup, patient details, longitudinal measurement table, KPI dashboard, printable clinical report layout, and copyright notices.</td>
+            </tr>
+            <tr>
+                <td><code>style.css</code></td>
+                <td>Glassmorphism dark aesthetic, responsive table design, threshold badges, counter stat bar, and <code>@media print</code> print styling.</td>
+            </tr>
+            <tr>
+                <td><code>script.js</code></td>
+                <td>Real-time calculation engine, CounterAPI v2 global counter engine, Chart.js bar renderer, and sample case preset loader.</td>
+            </tr>
+            <tr>
+                <td><code>evans_diagram.jpg</code></td>
+                <td>High-definition anatomical CT/MRI scan diagram showing exact Line A (widest frontal horn tips) and Line B (maximal inner skull diameter).</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer">
+        © 2026 Dr G Narenthiran FEBNS, FRCS(SN). All rights reserved. | Designed for Neurosurgery, Neurology & Radiology practice.
+    </div>
+
+</body>
+</html>
