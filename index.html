@@ -3,332 +3,585 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evans' Index Plus Calculator - Longitudinal Ventriculomegaly Tracker</title>
-    <meta name="description" content="Calculate and longitudinally track Evans' Index across consecutive CT/MRI brain scan time points with real-time ascending date bar charting and clinical risk indicators.">
+    <title>Cranial Index &amp; Cranial Vault Asymmetry Index Calculator Pro</title>
+    <meta name="description" content="Professional clinical calculator for Cranial Index (CI) and Cranial Vault Asymmetry Index (CVAI) in pediatric neurosurgery, craniofacial surgery, and radiology.">
+    <meta name="author" content="Dr G Narenthiran MB Ch FEBNS FRCS(SN)">
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Font Awesome Icons -->
+    <!-- FontAwesome 6 Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Chart.js & Plugins -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- Custom CSS -->
+    <!-- Custom Application CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-wrapper">
-        <!-- Main Header -->
-        <header class="main-header">
-            <div class="header-container">
-                <div class="brand-badge">
-                    <div class="brand-icon">
-                        <i class="fa-solid fa-brain"></i>
-                    </div>
-                    <div class="brand-text">
-                        <h1>Evans' Index Plus Calculator</h1>
-                        <p class="subtitle"><i class="fa-solid fa-user-doctor"></i> Supervising Developer: <strong>Dr G Narenthiran FEBNS, FRCS(SN)</strong>, <a href="mailto:g_narenthiran@hotmail.com">g_narenthiran@hotmail.com</a></p>
-                        <p class="developer-subtext">Longitudinal Cranial Ventriculomegaly & iNPH Tracking System</p>
-                    </div>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-brain"></i>
                 </div>
-
-                <div class="header-actions">
-                    <button id="btn-sample" class="btn-accent" title="Load sample 5-visit patient case">
-                        <i class="fa-solid fa-folder-open"></i> Load Sample Case
-                    </button>
-                    <button id="btn-reset" class="btn-secondary" title="Reset all time points">
-                        <i class="fa-solid fa-rotate-left"></i> Reset Form
-                    </button>
-                    <button id="btn-print" class="btn-primary" title="Export clinical report">
-                        <i class="fa-solid fa-print"></i> Export Report
-                    </button>
+                <div class="brand-titles">
+                    <h1>Cranial Index &amp; Cranial Vault Asymmetry Index Calculator Pro</h1>
+                    <p class="subtitle">Craniosynostosis &amp; Plagiocephaly Longitudinal Analytics (CI &amp; CVAI)</p>
+                    <p class="supervisor-line">
+                        <i class="fa-solid fa-user-doctor"></i> Supervising Developer: <strong>Dr G Narenthiran MB Ch FEBNS FRCS(SN)</strong> (<a href="mailto:g_narnethiran@hotmail.com">g_narnethiran@hotmail.com</a>) | Dedicated to my mother Mrs Nirmaladevy Ganesalingam BSc
+                    </p>
                 </div>
+            </div>
+            <div class="header-actions">
+                <button id="btn-sample-case" class="btn btn-secondary">
+                    <i class="fa-solid fa-vial"></i> Load Sample Case
+                </button>
+                <button id="btn-reset-all" class="btn btn-outline-danger">
+                    <i class="fa-solid fa-rotate-left"></i> Reset All
+                </button>
+                <button id="btn-print-report" class="btn btn-primary">
+                    <i class="fa-solid fa-print"></i> Print Active Report
+                </button>
             </div>
         </header>
 
-        <!-- Main Content Area -->
-        <main class="main-container">
-            <!-- Patient Info & Global Settings Card -->
-            <section class="card patient-card">
-                <div class="card-header">
-                    <h2><i class="fa-solid fa-id-card"></i> Patient Metadata & Measurement Units</h2>
-                </div>
-                <div class="card-body">
-                    <div class="patient-grid">
-                        <div class="form-group">
-                            <label for="patient-id"><i class="fa-solid fa-hospital-user"></i> Patient ID / MRN</label>
-                            <input type="text" id="patient-id" placeholder="e.g. MRN-98421" autocomplete="off">
-                        </div>
-                        <div class="form-group">
-                            <label for="patient-name"><i class="fa-solid fa-user"></i> Patient Initials / Name</label>
-                            <input type="text" id="patient-name" placeholder="e.g. J.D." autocomplete="off">
-                        </div>
-                        <div class="form-group">
-                            <label for="scan-modality"><i class="fa-solid fa-x-ray"></i> Preferred Scan Modality</label>
-                            <select id="scan-modality">
-                                <option value="MRI Brain">MRI Brain (Axial T2/FLAIR)</option>
-                                <option value="CT Brain">CT Brain (Axial Non-contrast)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="unit-select"><i class="fa-solid fa-ruler-horizontal"></i> Measurement Unit</label>
-                            <select id="unit-select">
-                                <option value="mm" selected>Millimeters (mm)</option>
-                                <option value="cm">Centimeters (cm)</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <!-- TRIPLE-TAB NAVIGATION BAR -->
+        <nav class="tab-navigation">
+            <button class="nav-tab active" id="tab-btn-ci" data-tab="tab-ci">
+                <i class="fa-solid fa-head-side-virus"></i>
+                <span>Cranial Index (CI) Calculator</span>
+                <small>Scaphocephaly &amp; Brachycephaly</small>
+            </button>
+            <button class="nav-tab" id="tab-btn-cvai" data-tab="tab-cvai">
+                <i class="fa-solid fa-vector-square"></i>
+                <span>Cranial Vault Asymmetry Index (CVAI)</span>
+                <small>Plagiocephaly &amp; Asymmetry</small>
+            </button>
+            <button class="nav-tab" id="tab-btn-hc" data-tab="tab-hc">
+                <i class="fa-solid fa-tape"></i>
+                <span>Head Circumference Centile (WHO)</span>
+                <small>Growth Chart &amp; Centiles (0–60m)</small>
+            </button>
+        </nav>
 
-            <!-- Multi-Timepoint Input Table Card -->
-            <section class="card data-card">
-                <div class="card-header flex-between">
-                    <div>
-                        <h2><i class="fa-solid fa-clock-rotate-left"></i> Longitudinal Evans' Index Time Points</h2>
-                        <p class="section-desc">Enter measurements across consecutive scan dates. The Evans' Index is calculated automatically as <code>Bifrontal Horn / Maximal Internal Skull</code>.</p>
-                    </div>
-                    <div class="unit-badge-pill">
-                        Unit: <span id="current-unit-display">mm</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Responsive Table Container -->
-                    <div class="table-responsive">
-                        <table class="evans-table" id="evans-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-tp"># Time Point</th>
-                                    <th class="col-date">Date <span class="required">*</span></th>
-                                    <th class="col-context">Context</th>
-                                    <th class="col-measurement">Bifrontal Horn Diameter (<span class="unit-unit">mm</span>) <span class="required">*</span></th>
-                                    <th class="col-measurement">Maximal Internal Skull Diameter (<span class="unit-unit">mm</span>) <span class="required">*</span></th>
-                                    <th class="col-result">Evans' Index</th>
-                                    <th class="col-status">Clinical Status</th>
-                                    <th class="col-action">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="timepoint-rows">
-                                <!-- Dynamic rows generated by JS (starts with 5 rows) -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Add Button Toolbar -->
-                    <div class="table-toolbar">
-                        <button id="btn-add-row" class="btn-add-tp">
-                            <i class="fa-solid fa-circle-plus"></i> Add Time Point
-                        </button>
-                        <div class="row-count-badge">
-                            Total Time Points: <span id="total-rows-count">5</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Chart & Summary Analytics Section -->
-            <section class="card chart-card" id="analytics-section">
-                <div class="card-header flex-between">
-                    <div>
-                        <h2><i class="fa-solid fa-chart-column"></i> Longitudinal Evans' Index Bar Graph</h2>
-                        <p class="section-desc">Dates are automatically ordered chronologically in ascending sequence on the X-axis.</p>
-                    </div>
-                    <div class="chart-tag">
-                        <i class="fa-solid fa-chart-line"></i> Chronological Tracking
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- KPI Summary Cards Grid -->
-                    <div class="kpi-grid">
-                        <div class="kpi-card">
-                            <div class="kpi-icon icon-blue"><i class="fa-solid fa-calendar-check"></i></div>
-                            <div class="kpi-details">
-                                <span class="kpi-title">Scans Evaluated</span>
-                                <span class="kpi-value" id="kpi-count">0</span>
-                            </div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-icon icon-cyan"><i class="fa-solid fa-clock"></i></div>
-                            <div class="kpi-details">
-                                <span class="kpi-title">Baseline Index</span>
-                                <span class="kpi-value" id="kpi-baseline">--</span>
-                            </div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-icon icon-purple"><i class="fa-solid fa-flag-checkered"></i></div>
-                            <div class="kpi-details">
-                                <span class="kpi-title">Latest Index</span>
-                                <span class="kpi-value" id="kpi-latest">--</span>
-                            </div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-icon icon-amber"><i class="fa-solid fa-arrow-trend-up"></i></div>
-                            <div class="kpi-details">
-                                <span class="kpi-title">Overall Delta (Δ)</span>
-                                <span class="kpi-value" id="kpi-delta">--</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Bar Chart Container -->
-                    <div class="chart-wrapper">
-                        <!-- Message shown when < 2 valid time points exist -->
-                        <div id="chart-placeholder" class="chart-placeholder">
-                            <div class="placeholder-content">
-                                <div class="placeholder-icon">
-                                    <i class="fa-solid fa-chart-bar"></i>
-                                </div>
-                                <h3>Bar Graph Requires &ge; 2 Time Points</h3>
-                                <p>Please fill in valid Date, Bifrontal Diameter, and Maximal Internal Skull Diameter for at least 2 time points to display the dynamic chronological bar graph.</p>
-                            </div>
-                        </div>
-
-                        <!-- Active Chart Canvas -->
-                        <div id="chart-container" class="chart-container hidden">
-                            <canvas id="evansChart"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Chart Legend & Clinical Threshold Explanation -->
-                    <div class="chart-legend-box">
-                        <div class="legend-item">
-                            <span class="legend-color color-normal"></span>
-                            <span>Normal Evans' Index (&lt; 0.30)</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-color color-elevated"></span>
-                            <span>Elevated Ventriculomegaly (&ge; 0.30)</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-line color-threshold"></span>
-                            <span>Diagnostic Cut-Off Threshold (0.30)</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Clinical Reference & Diagram Card -->
-            <section class="card reference-card">
-                <div class="card-header">
-                    <h2><i class="fa-solid fa-book-medical"></i> Anatomical Reference & Clinical Guidance</h2>
-                </div>
-                <div class="card-body">
-                    <div class="reference-grid">
-                        <div class="diagram-wrapper">
-                            <img src="evans_diagram.jpg" alt="Evans' Index Anatomical Diagram" class="evans-diagram-img">
-                            <p class="image-caption"><i class="fa-solid fa-circle-info"></i> Axial CT/MRI slice showing Bifrontal Horn Width (A) and Inner Skull Width (B).</p>
-                        </div>
-                        <div class="reference-content">
-                            <h3><i class="fa-solid fa-calculator"></i> Calculation Formula</h3>
-                            <div class="formula-box">
-                                \[\text{Evans' Index} = \frac{\text{Maximal Width of Frontal Horns (A)}}{\text{Maximal Internal Skull Diameter at Same Cut (B)}}\]
-                            </div>
-
-                            <h3><i class="fa-solid fa-stethoscope"></i> Diagnostic Cut-Off Thresholds</h3>
-                            <ul class="threshold-list">
-                                <li class="thresh-normal">
-                                    <span class="badge badge-normal">&lt; 0.30</span>
-                                    <div>
-                                        <strong>Normal Ventricular Size:</strong>
-                                        <p>Ventricular system is within standard physiological limits for age.</p>
-                                    </div>
-                                </li>
-                                <li class="thresh-warning">
-                                    <span class="badge badge-elevated">0.30 - 0.33</span>
-                                    <div>
-                                        <strong>Mild Ventriculomegaly:</strong>
-                                        <p>Elevated ventricular ratio. Suggestive of early hydrocephalus or mild ex-vacuo enlargement.</p>
-                                    </div>
-                                </li>
-                                <li class="thresh-danger">
-                                    <span class="badge badge-danger">&gt; 0.33</span>
-                                    <div>
-                                        <strong>Marked Ventriculomegaly:</strong>
-                                        <p>High suspicion for Idiopathic Normal Pressure Hydrocephalus (iNPH) or Obstructive Hydrocephalus. Correlate with clinical triad (gait impairment, cognitive decline, urinary urgency).</p>
-                                    </div>
-                                </li>
-                            </ul>
-
-                            <div class="clinical-note">
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-                                <strong>Clinical Note:</strong> Measurements should be obtained on the axial slice showing the maximum frontal horn expansion and internal cranial diameter. When evaluating iNPH, combine Evans' Index with other DESH features (Sylvian fissure dilation, tight high-convexity sulci, and callosal angle).
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </main>
-
-        <!-- Printable Structured Clinical Report (Hidden on Screen, Visible on Print) -->
-        <div id="print-report" class="print-only">
-            <div class="print-header">
-                <h2>EVANS' INDEX LONGITUDINAL CLINICAL REPORT</h2>
-                <p>Medical Decision Support & Serial Ventriculomegaly Tracking</p>
-                <hr>
+        <!-- COMMON PATIENT DEMOGRAPHICS BAR -->
+        <section class="patient-demographics-bar">
+            <div class="form-group">
+                <label for="patient-id"><i class="fa-solid fa-id-card"></i> Patient ID / MRN:</label>
+                <input type="text" id="patient-id" placeholder="e.g. CRN-90214">
             </div>
-            <div class="print-patient-meta">
-                <p><strong>Patient ID / MRN:</strong> <span id="print-patient-id">--</span></p>
-                <p><strong>Patient Name:</strong> <span id="print-patient-name">--</span></p>
-                <p><strong>Modality:</strong> <span id="print-modality">--</span></p>
-                <p><strong>Report Date:</strong> <span id="print-date">--</span></p>
-                <p><strong>Supervising Developer:</strong> Dr G Narenthiran FEBNS, FRCS(SN), g_narenthiran@hotmail.com</p>
+            <div class="form-group">
+                <label for="patient-name"><i class="fa-solid fa-user"></i> Patient Initials / Name:</label>
+                <input type="text" id="patient-name" placeholder="e.g. A.B. (Pediatric)">
             </div>
-
-            <div class="print-section">
-                <h3>Serial Scan Measurements</h3>
-                <table class="print-table">
-                    <thead>
-                        <tr>
-                            <th>Scan #</th>
-                            <th>Date</th>
-                            <th>Context</th>
-                            <th>Bifrontal Horn Width</th>
-                            <th>Max Internal Skull Width</th>
-                            <th>Evans' Index</th>
-                            <th>Interpretation</th>
-                        </tr>
-                    </thead>
-                    <tbody id="print-table-body">
-                        <!-- Printed Rows -->
-                    </tbody>
-                </table>
+            <div class="form-group">
+                <label for="scan-modality"><i class="fa-solid fa-ruler-horizontal"></i> Measurement done on:</label>
+                <select id="scan-modality">
+                    <option value="Head measure">Head measure</option>
+                    <option value="CT head" selected>CT head</option>
+                    <option value="MRI head">MRI head</option>
+                    <option value="3D model of head">3D model of head</option>
+                    <option value="Other">Other</option>
+                </select>
             </div>
-
-            <div class="print-section">
-                <h3>Longitudinal Summary</h3>
-                <p id="print-summary-text">--</p>
+            <div class="form-group">
+                <label for="head-circumference"><i class="fa-solid fa-tape"></i> Head Circumference (cm):</label>
+                <input type="number" id="head-circumference" step="0.1" min="0" placeholder="e.g. 41.5" aria-label="Head Circumference in cm">
             </div>
+            <div class="form-group">
+                <label for="head-circ-date"><i class="fa-solid fa-calendar-day"></i> Head Circ. Date:</label>
+                <input type="date" id="head-circ-date" aria-label="Head Circumference Date">
+            </div>
+            <div class="form-group">
+                <label for="top-hc-age"><i class="fa-solid fa-child"></i> Age (months):</label>
+                <input type="number" id="top-hc-age" step="0.1" min="0" max="60" placeholder="e.g. 6.0" aria-label="Age in months">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-venus-mars"></i> Gender:</label>
+                <div class="gender-radio-group" style="display: flex; gap: 12px; align-items: center; background: rgba(15, 23, 42, 0.6); padding: 7px 14px; border: 1px solid var(--border-dark); border-radius: var(--radius-sm); height: 42px;">
+                    <label class="radio-label" style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text-primary); font-size: 13px; font-weight: 500;">
+                        <input type="radio" name="top-hc-gender-radio" value="boy" checked style="accent-color: var(--primary-cyan); cursor: pointer;">
+                        <i class="fa-solid fa-mars" style="color: #38bdf8;"></i> Male
+                    </label>
+                    <label class="radio-label" style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--text-primary); font-size: 13px; font-weight: 500;">
+                        <input type="radio" name="top-hc-gender-radio" value="girl" style="accent-color: #ec4899; cursor: pointer;">
+                        <i class="fa-solid fa-venus" style="color: #ec4899;"></i> Female
+                    </label>
+                </div>
+            </div>
+            <div class="form-group form-group-btn">
+                <label>&nbsp;</label>
+                <button type="button" id="btn-top-hc-submit" class="btn btn-primary btn-submit-top" onclick="submitTopHcForm()">
+                    <i class="fa-solid fa-paper-plane"></i> Submit &amp; Plot Centile
+                </button>
+            </div>
+            <div class="form-group">
+                <label for="unit-select"><i class="fa-solid fa-ruler-combined"></i> Units:</label>
+                <select id="unit-select">
+                    <option value="mm">Millimeters (mm)</option>
+                    <option value="cm">Centimeters (cm)</option>
+                </select>
+            </div>
+        </section>
 
-            <div class="print-footer">
-                <p>Report generated via Evans' Index Plus Calculator Web App. &copy; 2026 Dr G Narenthiran (g_narenthiran@hotmail.com). Approved for clinical documentation support.</p>
+        <!-- LIVE WHO CENTILE RESULT BANNER (INSTANT DISPLAY ON TOP) -->
+        <div id="top-hc-result-banner" class="hidden" style="margin-top: 12px; padding: 14px 20px; background: rgba(15, 23, 42, 0.9); border: 1.5px solid var(--primary-cyan); border-radius: var(--radius-md); text-align: center; font-weight: 600; font-size: 15px; color: var(--primary-cyan); box-shadow: 0 4px 15px rgba(6, 182, 212, 0.25);">
+            <i class="fa-solid fa-chart-line"></i> <span id="top-hc-banner-text">Enter Age and Circumference to calculate WHO Centile.</span>
+        </div>
+
+        <!-- TOP WHO GROWTH CHART CONTAINER (VISIBLE DIRECTLY ON TOP SCREEN) -->
+        <div id="top-hc-chart-section" class="panel hidden" style="margin-top: 14px; margin-bottom: 20px; padding: 18px; border: 1.5px solid var(--primary-cyan); background: rgba(15, 23, 42, 0.95); box-shadow: 0 8px 30px rgba(6, 182, 212, 0.25);">
+            <div class="chart-header" style="margin-bottom: 12px; text-align: center;">
+                <h3 style="color: var(--primary-cyan); font-size: 17px; margin-bottom: 4px;"><i class="fa-solid fa-chart-line"></i> WHO Head Circumference Growth Chart (0–60 Months)</h3>
+                <span class="chart-sub" style="color: #94a3b8; font-size: 13px;">Comparing patient measurement against WHO 3rd, 15th, 50th, 85th &amp; 97th centiles</span>
+            </div>
+            <div class="chart-body">
+                <div class="chart-canvas-wrapper" style="height: 380px;">
+                    <canvas id="topHcChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- Main Footer -->
-        <footer class="main-footer">
+        <!-- TAB 1: CRANIAL INDEX (CI) CALCULATOR CONTENT -->
+        <div id="tab-ci" class="tab-content active">
+            <main class="main-content">
+                <!-- ANATOMY PANEL (CI) -->
+                <aside class="panel anatomy-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-skull"></i> Anatomical Reference &amp; Landmarks (CI)</h2>
+                    </div>
+                    
+                    <div class="diagram-wrapper">
+                        <img src="cranial_diagram.jpg?v=3.0" alt="Cranial Index Diagram - Biparietal & Occipitofrontal Diameters" class="diagram-img">
+                    </div>
+
+                    <div class="formula-box">
+                        <h3><i class="fa-solid fa-calculator"></i> Formula &amp; Definition</h3>
+                        <div class="formula-math">
+                            $$\text{Cranial Index (CI)} = \frac{\text{Line A: Biparietal Diameter (BPD)}}{\text{Line B: Occipitofrontal Diameter (OFD)}}$$
+                        </div>
+                        <p class="formula-note">Expressed as a ratio (and percentage) formatted strictly to <strong>two decimal places</strong>.</p>
+                    </div>
+
+                    <div class="thresholds-box">
+                        <h3><i class="fa-solid fa-list-check"></i> Clinical Cut-off Thresholds</h3>
+                        <ul class="threshold-list">
+                            <li class="t-scapho">
+                                <span class="t-badge"><i class="fa-solid fa-arrows-left-right"></i> CI &lt; 0.75 (&lt; 75.00%)</span>
+                                <span class="t-desc">Dolichocephaly / Scaphocephaly (Sagittal Synostosis)</span>
+                            </li>
+                            <li class="t-normal">
+                                <span class="t-badge"><i class="fa-solid fa-check-double"></i> 0.75 - 0.85 (75 - 85%)</span>
+                                <span class="t-desc">Mesocephaly (Normal Cranial Vault Ratio)</span>
+                            </li>
+                            <li class="t-brachy">
+                                <span class="t-badge"><i class="fa-solid fa-arrows-up-down"></i> CI &gt; 0.85 (&gt; 85.00%)</span>
+                                <span class="t-desc">Brachycephaly (Coronal / Lambdoid Synostosis)</span>
+                            </li>
+                            <li class="t-severe">
+                                <span class="t-badge"><i class="fa-solid fa-triangle-exclamation"></i> CI &gt; 0.90 (&gt; 90.00%)</span>
+                                <span class="t-desc">Severe Brachycephaly / Oxycephaly</span>
+                            </li>
+                        </ul>
+                        <p class="clinical-variability-note">
+                            <i class="fa-solid fa-triangle-exclamation"></i> <strong>Clinical Note:</strong> Diagnosis is clinical. Threshold values provided can vary depending on the age, sex, and race/ethnicity of the child.
+                        </p>
+                    </div>
+                </aside>
+
+                <!-- CALCULATOR PANEL (CI) -->
+                <section class="panel calculator-panel">
+                    <div class="table-container">
+                        <div class="table-header-title">
+                            <h3><i class="fa-solid fa-timeline"></i> Longitudinal Cranial Index Measurements</h3>
+                            <span class="badge-total-rows">Total Scans: <strong id="ci-rows-count">5</strong></span>
+                        </div>
+
+                        <div class="table-scroll">
+                            <table class="evans-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-tp">Scan #</th>
+                                        <th class="col-date">Date</th>
+                                        <th class="col-context">Context (Meta)</th>
+                                        <th class="col-measurement">Biparietal Diameter (BPD)</th>
+                                        <th class="col-measurement">Occipitofrontal Diameter (OFD)</th>
+                                        <th class="col-result">Cranial Index (CI)</th>
+                                        <th class="col-status">Classification</th>
+                                        <th class="col-action">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ci-table-body">
+                                    <!-- Dynamic Rows Generated via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-footer-controls">
+                            <button type="button" id="btn-add-ci-row" class="btn btn-add-tp">
+                                <i class="fa-solid fa-plus-circle"></i> Add Time Point
+                            </button>
+                            <span class="helper-text"><i class="fa-solid fa-circle-info"></i> Enter values into BPD and OFD. Calculations generate live with or without dates.</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI SUMMARY CARDS (CI) -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <span class="kpi-title"><i class="fa-solid fa-hashtag"></i> Total Scans Computed</span>
+                            <span class="kpi-value" id="ci-kpi-count">0</span>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="kpi-title"><i class="fa-solid fa-chart-line"></i> Baseline Cranial Index</span>
+                            <span class="kpi-value" id="ci-kpi-baseline">--</span>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="kpi-title"><i class="fa-solid fa-flag-checkered"></i> Latest Cranial Index</span>
+                            <span class="kpi-value" id="ci-kpi-latest">--</span>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="kpi-title"><i class="fa-solid fa-arrow-trend-up"></i> Total Change (&Delta; CI)</span>
+                            <span class="kpi-value" id="ci-kpi-delta">--</span>
+                        </div>
+                    </div>
+
+                    <!-- LONGITUDINAL BAR CHART (CI) -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <h3><i class="fa-solid fa-chart-column"></i> Longitudinal Cranial Index Bar Graph</h3>
+                            <span class="chart-sub">Visualizing cranial ratio evolution over time &amp; treatment</span>
+                        </div>
+                        <div class="chart-body">
+                            <div id="ci-chart-placeholder" class="chart-placeholder">
+                                <i class="fa-solid fa-chart-bar placeholder-icon"></i>
+                                <p>Enter measurements into at least 1 time point row to generate the Cranial Index Bar Graph.</p>
+                            </div>
+                            <div id="ci-chart-container" class="chart-canvas-wrapper hidden">
+                                <canvas id="ciChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- TAB 2: CRANIAL VAULT ASYMMETRY INDEX (CVAI) CALCULATOR CONTENT -->
+        <div id="tab-cvai" class="tab-content">
+            <main class="main-content">
+                <!-- ANATOMY PANEL (CVAI) -->
+                <aside class="panel anatomy-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-vector-square"></i> Diagonal Landmarks &amp; Obliques (CVAI)</h2>
+                    </div>
+                    
+                    <div class="diagram-wrapper">
+                        <img src="cvai_diagram.png?v=2.0" alt="CVAI Diagonal Measurement Vertex View - 30 Degree Obliques" class="diagram-img">
+                    </div>
+
+                    <!-- DENOMINATOR CONVENTION CONTEXT -->
+                    <div class="form-group denominator-select-box">
+                        <label for="cvai-denominator"><i class="fa-solid fa-divide"></i> CVAI Denominator Convention:</label>
+                        <select id="cvai-denominator">
+                            <option value="shorter" selected>Shorter diagonal diameter (Standard)</option>
+                            <option value="longer">Longer diagonal diameter (Alternative)</option>
+                        </select>
+                    </div>
+
+                    <div class="formula-box">
+                        <h3><i class="fa-solid fa-calculator"></i> Formula &amp; Definition</h3>
+                        <div class="formula-math" id="cvai-formula-display">
+                            $$\text{CVAI (\%)} = \frac{|\text{Longer} - \text{Shorter}|}{\text{Shorter Diagonal}} \times 100$$
+                        </div>
+                        <p class="formula-note">Diagonals taken at <strong>30&deg; to the midline</strong> (crossing at vault center). CVA is the absolute difference ($|A - B|$) in mm/cm.</p>
+                    </div>
+
+                    <div class="thresholds-box">
+                        <h3><i class="fa-solid fa-list-check"></i> Clinical Cut-off Thresholds (CVAI)</h3>
+                        <ul class="threshold-list">
+                            <li class="t-normal">
+                                <span class="t-badge"><i class="fa-solid fa-check-double"></i> CVAI &lt; 3.5%</span>
+                                <span class="t-desc">Normal Symmetry</span>
+                            </li>
+                            <li class="t-scapho">
+                                <span class="t-badge"><i class="fa-solid fa-circle-exclamation"></i> 3.5% - 6.25%</span>
+                                <span class="t-desc">Mild Plagiocephaly</span>
+                            </li>
+                            <li class="t-brachy">
+                                <span class="t-badge"><i class="fa-solid fa-triangle-exclamation"></i> 6.25% - 8.75%</span>
+                                <span class="t-desc">Moderate Plagiocephaly</span>
+                            </li>
+                            <li class="t-severe">
+                                <span class="t-badge"><i class="fa-solid fa-triangle-exclamation"></i> CVAI &gt; 8.75%</span>
+                                <span class="t-desc">Severe Plagiocephaly</span>
+                            </li>
+                        </ul>
+                        
+                        <p class="clinical-variability-note">
+                            <i class="fa-solid fa-triangle-exclamation"></i> <strong>Threshold Note:</strong> The cut-off thresholds above were derived using the <em>shorter diagonal diameter</em> as the denominator. Diagnosis is clinical; values can vary depending on age, sex, and race/ethnicity.
+                        </p>
+                    </div>
+
+                    <!-- CLINICAL INSIGHTS & LITERATURE REFERENCE BOX -->
+                    <div class="clinical-insights-card">
+                        <h4><i class="fa-solid fa-book-bookmark"></i> Literature &amp; Denominator Reference</h4>
+                        <p class="ref-summary-text">
+                            Regardless of whether the <em>shorter</em> or <em>longer</em> diagonal diameter is chosen as the denominator, research demonstrates little practical clinical difference in threshold values.
+                        </p>
+                        <div class="citation-box">
+                            <strong>Reference Citation:</strong><br>
+                            Miyabayashi H, Saito K, Kato R, Noto T, Nagano N, Morioka I. <em>Denominator of Cranial Vault Asymmetry Index: Choosing Between Longer and Shorter Diagonal Lengths.</em> J Craniofac Surg. 2023;33(5):e369. doi:<a href="https://doi.org/10.1097/SCS.0000000000009263" target="_blank" rel="noopener">10.1097/SCS.0000000000009263</a>
+                        </div>
+                    </div>
+
+                    <div class="clinical-insights-card">
+                        <h4><i class="fa-solid fa-notes-medical"></i> Critical Clinical Points</h4>
+                        <ul>
+                            <li><strong>Scaphocephaly Alert:</strong> A normal CVAI does <em>not</em> reassure in scaphocephaly. Sagittal synostosis is symmetric, so CVAI remains normal while CI falls.</li>
+                            <li><strong>Morphology Differentiation:</strong> CVAI cannot distinguish deformational plagiocephaly (parallelogram deformation) from synostotic plagiocephaly (trapezoid deformation). Morphological clinical examination is required.</li>
+                        </ul>
+                    </div>
+                </aside>
+
+                <!-- CALCULATOR PANEL (CVAI) -->
+                <section class="panel calculator-panel">
+                    <div class="table-container">
+                        <div class="table-header-title">
+                            <h3><i class="fa-solid fa-timeline"></i> Longitudinal CVAI &amp; Asymmetry Measurements</h3>
+                            <span class="badge-total-rows">Total Scans: <strong id="cvai-rows-count">5</strong></span>
+                        </div>
+
+                        <div class="table-scroll">
+                            <table class="evans-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-tp">Scan #</th>
+                                        <th class="col-date">Date</th>
+                                        <th class="col-context">Context (Meta)</th>
+                                        <th class="col-measurement">Shorter diagonal diameter</th>
+                                        <th class="col-measurement">Longer diagonal diameter</th>
+                                        <th class="col-result">CVA (|B-A|)</th>
+                                        <th class="col-result">CVAI (%)</th>
+                                        <th class="col-status">Classification</th>
+                                        <th class="col-action">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cvai-table-body">
+                                    <!-- Dynamic Rows Generated via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-footer-controls">
+                            <button type="button" id="btn-add-cvai-row" class="btn btn-add-tp">
+                                <i class="fa-solid fa-plus-circle"></i> Add Time Point
+                            </button>
+                            <span class="helper-text"><i class="fa-solid fa-circle-info"></i> Enter Shorter &amp; Longer diagonals (at 30&deg; to midline). CVAI &amp; CVA compute live with or without dates.</span>
+                        </div>
+                    </div>
+
+                    <!-- KPI SUMMARY CARDS (CVAI) -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <span class="kpi-title"><i class="fa-solid fa-hashtag"></i> Total Scans Computed</span>
+                            <span class="kpi-value" id="cvai-kpi-count">0</span>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="kpi-title"><i class="fa-solid fa-chart-line"></i> Baseline CVAI (%)</span>
+                            <span class="kpi-value" id="cvai-kpi-baseline">--</span>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="kpi-title"><i class="fa-solid fa-flag-checkered"></i> Latest CVAI (%)</span>
+                            <span class="kpi-value" id="cvai-kpi-latest">--</span>
+                        </div>
+                        <div class="kpi-card">
+                            <span class="kpi-title"><i class="fa-solid fa-arrow-trend-down"></i> Total Change (&Delta; CVAI)</span>
+                            <span class="kpi-value" id="cvai-kpi-delta">--</span>
+                        </div>
+                    </div>
+
+                    <!-- LONGITUDINAL BAR CHART (CVAI) -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <h3><i class="fa-solid fa-chart-column"></i> Longitudinal CVAI Asymmetry Bar Graph</h3>
+                            <span class="chart-sub">Visualizing plagiocephaly vault asymmetry index over time &amp; treatment</span>
+                        </div>
+                        <div class="chart-body">
+                            <div id="cvai-chart-placeholder" class="chart-placeholder">
+                                <i class="fa-solid fa-chart-bar placeholder-icon"></i>
+                                <p>Enter measurements into at least 1 time point row to generate the CVAI Bar Graph.</p>
+                            </div>
+                            <div id="cvai-chart-container" class="chart-canvas-wrapper hidden">
+                                <canvas id="cvaiChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        <!-- TAB 3: HEAD CIRCUMFERENCE CENTILE & WHO GROWTH CHART CONTENT -->
+        <div id="tab-hc" class="tab-content">
+            <main class="main-content">
+                <!-- CONTROLS & WHO CENTILE PANEL (HC) -->
+                <aside class="panel anatomy-panel">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-tape"></i> Head Circumference &amp; Centile (WHO)</h2>
+                    </div>
+
+                    <div class="form-group denominator-select-box">
+                        <label><i class="fa-solid fa-venus-mars"></i> Patient Gender:</label>
+                        <div class="gender-radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="hc-gender-radio" value="boy" checked>
+                                <span><i class="fa-solid fa-mars" style="color: #38bdf8;"></i> Male</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="hc-gender-radio" value="girl">
+                                <span><i class="fa-solid fa-venus" style="color: #ec4899;"></i> Female</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hc-age-months"><i class="fa-solid fa-child"></i> Age of Patient (in months):</label>
+                        <input type="number" id="hc-age-months" step="0.1" min="0" max="60" placeholder="e.g. 6.0" aria-label="Age in months">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hc-value-cm"><i class="fa-solid fa-ruler"></i> Head Circumference (cm):</label>
+                        <input type="number" id="hc-value-cm" step="0.1" min="20" max="65" placeholder="e.g. 43.5" aria-label="Head Circumference in cm">
+                    </div>
+
+                    <button type="button" id="btn-hc-submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 4px;" onclick="submitTopHcForm()">
+                        <i class="fa-solid fa-calculator"></i> Calculate Centile &amp; Plot on Graph
+                    </button>
+
+                    <!-- CENTILE RESULT DISPLAY CARD -->
+                    <div class="formula-box">
+                        <h3><i class="fa-solid fa-chart-line"></i> WHO Centile Result</h3>
+                        <div class="kpi-grid" style="grid-template-columns: 1fr 1fr; margin-top: 10px;">
+                            <div class="kpi-card" style="padding: 12px;">
+                                <span class="kpi-title">Calculated Centile</span>
+                                <span class="kpi-value" id="hc-kpi-centile" style="font-size: 20px; color: var(--primary-cyan);">--</span>
+                            </div>
+                            <div class="kpi-card" style="padding: 12px;">
+                                <span class="kpi-title">Z-Score (SD)</span>
+                                <span class="kpi-value" id="hc-kpi-zscore" style="font-size: 20px;">--</span>
+                            </div>
+                        </div>
+                        <div id="hc-status-badge" style="margin-top: 12px; text-align: center;">
+                            <span class="badge badge-empty"><i class="fa-solid fa-minus"></i> Enter Age &amp; Circumference</span>
+                        </div>
+                    </div>
+
+                    <div class="thresholds-box">
+                        <h3><i class="fa-solid fa-list-check"></i> WHO Growth Standards (0–60 Months)</h3>
+                        <ul class="threshold-list">
+                            <li class="t-severe">
+                                <span class="t-badge"><i class="fa-solid fa-arrow-up"></i> &gt; 97th Centile (+2 SD)</span>
+                                <span class="t-desc">Macrocephaly / Rapid Vault Growth</span>
+                            </li>
+                            <li class="t-normal">
+                                <span class="t-badge"><i class="fa-solid fa-check-double"></i> 3rd - 97th Centile (-2 to +2 SD)</span>
+                                <span class="t-desc">Normal Head Circumference Range</span>
+                            </li>
+                            <li class="t-severe">
+                                <span class="t-badge"><i class="fa-solid fa-arrow-down"></i> &lt; 3rd Centile (-2 SD)</span>
+                                <span class="t-desc">Microcephaly / Restricted Vault Growth</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="clinical-insights-card">
+                        <h4><i class="fa-solid fa-book-bookmark"></i> Reference Standard</h4>
+                        <p class="ref-summary-text">
+                            WHO Child Growth Standards (Head Circumference-for-age, 0 to 60 completed months). World Health Organization Multicentre Growth Reference Study Group.
+                        </p>
+                    </div>
+                </aside>
+
+                <!-- CALCULATOR PANEL & WHO GROWTH CHART (HC) -->
+                <section class="panel calculator-panel">
+                    <div class="table-container">
+                        <div class="table-header-title">
+                            <h3><i class="fa-solid fa-timeline"></i> Longitudinal Head Circumference Measurements</h3>
+                            <span class="badge-total-rows">Total Measurements: <strong id="hc-rows-count">5</strong></span>
+                        </div>
+
+                        <div class="table-scroll">
+                            <table class="evans-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-tp">Scan #</th>
+                                        <th class="col-date">Date</th>
+                                        <th class="col-context">Context (Meta)</th>
+                                        <th class="col-measurement">Age (months)</th>
+                                        <th class="col-measurement">Head Circ. (cm)</th>
+                                        <th class="col-result">Centile (%)</th>
+                                        <th class="col-result">Z-Score</th>
+                                        <th class="col-status">Classification</th>
+                                        <th class="col-action">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="hc-table-body">
+                                    <!-- Dynamic Rows Generated via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="table-footer-controls">
+                            <button type="button" id="btn-add-hc-row" class="btn btn-add-tp">
+                                <i class="fa-solid fa-plus-circle"></i> Add Growth Point
+                            </button>
+                            <span class="helper-text"><i class="fa-solid fa-circle-info"></i> Enter Age (months) and Head Circumference (cm). Centiles &amp; trajectory plot live.</span>
+                        </div>
+                    </div>
+
+                    <!-- WHO GROWTH CHART CANVAS CONTAINER -->
+                    <div class="chart-section">
+                        <div class="chart-header">
+                            <h3><i class="fa-solid fa-chart-line"></i> WHO Head Circumference Growth Chart (0–60 Months)</h3>
+                            <span class="chart-sub">Comparing patient trajectory against WHO 3rd, 15th, 50th, 85th &amp; 97th centiles</span>
+                        </div>
+                        <div class="chart-body">
+                            <div id="hc-chart-container" class="chart-canvas-wrapper" style="height: 380px;">
+                                <canvas id="hcChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+        <!-- FOOTER & COPYRIGHT -->
+        <footer class="app-footer">
             <div class="footer-stats-bar">
-                <div class="stat-badge" title="Total times this web app has been opened/viewed">
+                <div class="stat-badge" title="Total global app views across all devices worldwide">
                     <i class="fa-solid fa-eye"></i>
                     <span>App Views:</span>
-                    <strong id="counter-views">1</strong>
+                    <strong id="counter-views">...</strong>
                 </div>
-                <div class="stat-badge" title="Total Evans' Index calculations performed">
+                <div class="stat-badge" title="Total global CI & CVAI calculations performed">
                     <i class="fa-solid fa-calculator"></i>
                     <span>Calculations Done:</span>
-                    <strong id="counter-calcs">0</strong>
+                    <strong id="counter-calcs">...</strong>
                 </div>
             </div>
-            <p>&copy; 2026 <strong>Dr G Narenthiran FEBNS, FRCS(SN)</strong> (<a href="mailto:g_narenthiran@hotmail.com">g_narenthiran@hotmail.com</a>). All rights reserved. Designed for Neurosurgery, Neurology & Radiology practice.</p>
-            <p class="disclaimer">Disclaimer: This tool is intended for clinical decision support and educational reference. Final diagnosis requires correlation with comprehensive clinical examination and radiological assessment.</p>
+            
+            <p class="copyright-notice">
+                &copy; 2026 <strong>Dr G Narenthiran MB Ch FEBNS FRCS(SN)</strong> (<a href="mailto:g_narnethiran@hotmail.com">g_narnethiran@hotmail.com</a>) | Dedicated to my mother Mrs Nirmaladevy Ganesalingam BSc. All rights reserved. Designed for Pediatric Neurosurgery, Craniofacial Surgery &amp; Radiology practice.
+            </p>
+            
+            <p class="mandatory-disclaimer">
+                <strong>Important Notice:</strong> Please check the calculations manually. <em>Disclaimer:</em> This tool is not intended for clinical decision support; it is for educational reference in patients with craniosynostosis and cranial deformities. Final diagnosis and treatment decisions require correlation with comprehensive clinical examination and multiplanar radiological/anthropometric assessment. Threshold values provided can vary depending on the age, sex, and race/ethnicity of the child.
+            </p>
         </footer>
     </div>
 
-    <!-- Application Script -->
-    <script src="script.js?v=13.0"></script>
+    <!-- Application JavaScript File -->
+    <script src="script.js?v=20.0"></script>
 </body>
 </html>
